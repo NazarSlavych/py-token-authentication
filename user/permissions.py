@@ -14,13 +14,6 @@ class IsAdminOrIfAuthenticatedReadOnly(BasePermission):
         return False
 
 
-class DenyDeletePermission(BasePermission):
-    def has_permission(self, request, view):
-        if request.method == "DELETE":
-            return False
-        return True
-
-
 class IsOrderOwnerOrAdmin(BasePermission):
     def has_permission(self, request, view):
         return request.user and request.user.is_authenticated
