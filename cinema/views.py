@@ -2,6 +2,7 @@ from datetime import datetime
 
 from django.db.models import F, Count
 from rest_framework import viewsets
+from rest_framework.authentication import TokenAuthentication
 from rest_framework.pagination import PageNumberPagination
 
 from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order
@@ -19,26 +20,51 @@ from cinema.serializers import (
     OrderSerializer,
     OrderListSerializer,
 )
+from user.permissions import (
+    IsAdminOrIfAuthenticatedReadOnly,
+    DenyDeletePermission,
+    IsOrderOwnerOrAdmin
+)
 
 
 class GenreViewSet(viewsets.ModelViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
+    permission_classes = [
+        IsAdminOrIfAuthenticatedReadOnly,
+        DenyDeletePermission,
+    ]
+    authentication_classes = [TokenAuthentication, ]
 
 
 class ActorViewSet(viewsets.ModelViewSet):
     queryset = Actor.objects.all()
     serializer_class = ActorSerializer
+    permission_classes = [
+        IsAdminOrIfAuthenticatedReadOnly,
+        DenyDeletePermission
+    ]
+    authentication_classes = [TokenAuthentication]
 
 
 class CinemaHallViewSet(viewsets.ModelViewSet):
     queryset = CinemaHall.objects.all()
     serializer_class = CinemaHallSerializer
+    permission_classes = [
+        IsAdminOrIfAuthenticatedReadOnly,
+        DenyDeletePermission
+    ]
+    authentication_classes = [TokenAuthentication]
 
 
 class MovieViewSet(viewsets.ModelViewSet):
     queryset = Movie.objects.prefetch_related("genres", "actors")
     serializer_class = MovieSerializer
+    permission_classes = [
+        IsAdminOrIfAuthenticatedReadOnly,
+        DenyDeletePermission
+    ]
+    authentication_classes = [TokenAuthentication]
 
     @staticmethod
     def _params_to_ints(qs):
@@ -87,6 +113,8 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         )
     )
     serializer_class = MovieSessionSerializer
+    permission_classes = [IsAdminOrIfAuthenticatedReadOnly, ]
+    authentication_classes = [TokenAuthentication]
 
     def get_queryset(self):
         date = self.request.query_params.get("date")
@@ -124,6 +152,8 @@ class OrderViewSet(viewsets.ModelViewSet):
     )
     serializer_class = OrderSerializer
     pagination_class = OrderPagination
+    permission_classes = [DenyDeletePermission, IsOrderOwnerOrAdmin]
+    authentication_classes = [TokenAuthentication]
 
     def get_queryset(self):
         return Order.objects.filter(user=self.request.user)
